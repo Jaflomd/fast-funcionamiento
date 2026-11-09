@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FAST · Funcionamiento</title>
+<style>
+:root{
+  --bg:#eef2f4; --card:#ffffff; --ink:#14232c; --muted:#5a6b75; --line:#d7e0e5; --soft:#f5f8f9;
+  --brand:#0b4f6c; --brand-ink:#ffffff; --brand-2:#b3202e; --accent:#0b6e8f; --accent-soft:#e1eff4;
+  --warn:#8a5a00; --warn-soft:#fdf3df; --ok:#2e7d4f;
+  --s0:#2e7d4f; --s1:#9a8f12; --s2:#c46a17; --s3:#b3202e; --ne:#6b7780;
+  --shadow:0 1px 2px rgba(10,40,55,.06),0 4px 14px rgba(10,40,55,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f171c; --card:#172229; --ink:#e6edf1; --muted:#9aaab3; --line:#2a3a43; --soft:#1b2830;
+    --brand:#0d3e55; --accent:#58b4d6; --accent-soft:#16323f; --warn:#e7b65c; --warn-soft:#2d2513;
+    --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f171c; --card:#172229; --ink:#e6edf1; --muted:#9aaab3; --line:#2a3a43; --soft:#1b2830;
+  --brand:#0d3e55; --accent:#58b4d6; --accent-soft:#16323f; --warn:#e7b65c; --warn-soft:#2d2513;
+  --shadow:none;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer;transition:background .12s,border-color .12s,transform .05s}
+button:hover{border-color:var(--accent)}
+button:active{transform:scale(.98)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+button.ghost{background:transparent}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+input,select,textarea{font:inherit;color:inherit;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%}
+textarea{min-height:64px;resize:vertical}
+label.f{display:block;font-size:13px;font-weight:600;color:var(--muted)}
+label.f>input,label.f>select{margin-top:4px;font-weight:400;color:var(--ink)}
+
+/* Institutional header */
+.inst{background:var(--brand);color:var(--brand-ink);border-bottom:4px solid var(--brand-2)}
+.inst .in{max-width:1180px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px}
+.seal{flex:0 0 42px;height:42px;border-radius:50%;border:2px solid rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;letter-spacing:.5px}
+.inst .t1{font-weight:700;font-size:16px;line-height:1.2}
+.inst .t2{font-size:13px;opacity:.85}
+.inst .tool{margin-left:auto;text-align:right;font-size:13px;opacity:.9;line-height:1.25}
+.inst .tool b{display:block;font-size:15px;opacity:1}
+@media (max-width:560px){.inst .tool{display:none}}
+
+/* Status bar */
+.status{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line);box-shadow:var(--shadow)}
+.status .in{max-width:1180px;margin:0 auto;padding:8px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:13px;font-weight:600}
+.prog{flex:1 1 140px;min-width:120px}
+.prog .bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.prog .bar i{display:block;height:100%;background:var(--accent);transition:width .25s}
+.prog small{color:var(--muted);font-size:12px}
+.tot{font-variant-numeric:tabular-nums;font-weight:800;font-size:18px}
+.tot small{font-weight:600;color:var(--muted);font-size:12px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:none;border-radius:0;padding:6px 12px;font-size:14px;background:var(--card)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--accent);color:#fff}
+.saved{font-size:12px;color:var(--ok);opacity:0;transition:opacity .3s}
+.saved.show{opacity:1}
+
+/* Layout */
+.layout{max-width:1180px;margin:0 auto;padding:16px;display:grid;grid-template-columns:250px 1fr;gap:18px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:1fr}.side{display:none}}
+.side{position:sticky;top:70px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;box-shadow:var(--shadow)}
+.side .st{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:none;background:transparent;padding:8px 10px;border-radius:8px;font-size:14px}
+.side .st.on{background:var(--accent-soft);font-weight:700}
+.side .st .sub{margin-left:auto;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.side .dots{display:flex;gap:4px;padding:0 10px 8px 34px;flex-wrap:wrap}
+.side .dots button{width:22px;height:22px;padding:0;border-radius:6px;font-size:11px;line-height:20px;font-variant-numeric:tabular-nums}
+.side .dots button.cur{outline:2px solid var(--accent);outline-offset:1px}
+.num{flex:0 0 20px;height:20px;border-radius:50%;background:var(--line);font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:700}
+.num.done{background:var(--ok);color:#fff}
+.mtabs{display:none;gap:6px;overflow-x:auto;padding:10px 16px 0;max-width:1180px;margin:0 auto}
+.mtabs button{flex:0 0 auto;font-size:14px;padding:6px 10px}
+.mtabs button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+@media (max-width:900px){.mtabs{display:flex}}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:14px;box-shadow:var(--shadow)}
+.eyebrow{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;font-weight:700}
+h2{margin:4px 0 6px;font-size:23px;line-height:1.25}
+h3{margin:0 0 10px;font-size:17px}
+.what{color:var(--muted);margin:0 0 14px}
+.lbl{font-size:12px;font-weight:700;color:var(--muted);margin:16px 0 8px;text-transform:uppercase;letter-spacing:.6px}
+.qs{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.qs li{background:var(--soft);border-radius:8px;padding:8px 12px;font-size:15px}
+.qs li::before{content:"“";color:var(--accent);font-weight:800;margin-right:2px}
+.qs li::after{content:"”";color:var(--accent);font-weight:800}
+.opts{display:grid;gap:8px}
+.opt{display:flex;gap:12px;align-items:flex-start;text-align:left;padding:12px 14px;border-radius:12px;width:100%;border-width:2px;position:relative}
+.opt b{flex:0 0 34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px}
+.opt[data-v="0"] b{background:var(--s0)} .opt[data-v="1"] b{background:var(--s1)}
+.opt[data-v="2"] b{background:var(--s2)} .opt[data-v="3"] b{background:var(--s3)}
+.opt[data-v="NE"] b{background:var(--ne);font-size:12px}
+.opt strong{display:block}
+.opt small{display:block;color:var(--muted);font-size:14px;margin-top:2px}
+.opt.sel{border-color:var(--accent);background:var(--accent-soft)}
+.opt.sel::after{content:"✓";position:absolute;right:14px;top:12px;color:var(--accent);font-weight:800}
+.box{padding:10px 14px;border-radius:10px;margin-top:12px;font-size:15px}
+.box.warn{background:var(--warn-soft);border-left:4px solid var(--warn)}
+.box.tip{background:var(--accent-soft);border-left:4px solid var(--accent)}
+.chk{display:flex;gap:8px;align-items:center;font-size:15px;margin-top:10px;cursor:pointer}
+.chk input{width:18px;height:18px;flex:0 0 18px}
+.toggles{display:flex;flex-wrap:wrap;gap:6px}
+.tog{font-size:14px;padding:6px 12px;border-radius:999px}
+.tog.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.navbtns{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.kbd{font-size:12px;color:var(--muted);text-align:center}
+.kbd kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-family:inherit;background:var(--soft)}
+
+/* Quick entry */
+.qgroup{margin-bottom:14px}
+.qhead{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+.qhead .sub{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:700}
+.qrow{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.qrow .n{font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.qrow .tt{font-size:15px;cursor:pointer}
+.qrow .tt:hover{color:var(--accent)}
+.qseg{display:inline-flex;gap:4px}
+.qseg button{width:38px;height:36px;padding:0;font-weight:700;border-radius:8px}
+.qseg button.ne{width:44px;font-size:12px}
+.qseg button.on[data-v="0"]{background:var(--s0);border-color:var(--s0);color:#fff}
+.qseg button.on[data-v="1"]{background:var(--s1);border-color:var(--s1);color:#fff}
+.qseg button.on[data-v="2"]{background:var(--s2);border-color:var(--s2);color:#fff}
+.qseg button.on[data-v="3"]{background:var(--s3);border-color:var(--s3);color:#fff}
+.qseg button.on[data-v="NE"]{background:var(--ne);border-color:var(--ne);color:#fff}
+@media (max-width:520px){.qrow{grid-template-columns:24px 1fr}.qseg{grid-column:1/-1;justify-content:flex-end}}
+
+/* Results */
+.hero{display:flex;gap:24px;align-items:center;flex-wrap:wrap}
+.big{font-size:56px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.big small{font-size:20px;color:var(--muted);font-weight:600}
+.pill{display:inline-block;padding:4px 12px;border-radius:999px;font-weight:700;font-size:14px;color:#fff}
+.gauge{position:relative;height:14px;border-radius:7px;display:flex;overflow:hidden;margin:16px 0 4px}
+.gauge span{height:100%}
+.gmark{position:absolute;top:-5px;width:4px;height:24px;background:var(--ink);border-radius:2px;transform:translateX(-2px)}
+.gl{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.dbar{display:grid;grid-template-columns:minmax(120px,190px) 1fr 70px;gap:10px;align-items:center;margin:8px 0;font-size:14px}
+.dbar .tr{height:12px;background:var(--line);border-radius:6px;overflow:hidden}
+.dbar .tr i{display:block;height:100%;border-radius:6px}
+.dbar .v{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:14px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
+td.r,th.r{text-align:right}
+pre{white-space:pre-wrap;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13px;max-height:320px;overflow:auto}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.muted{color:var(--muted);font-size:14px}
+.hist{display:grid;gap:6px}
+.hist .h{display:flex;gap:10px;align-items:center;padding:8px 10px;background:var(--soft);border-radius:8px;font-size:14px}
+.hist .h .sp{margin-left:auto}
+.delta{font-weight:700}
+.foot{max-width:1180px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font-size:12px}
+
+/* Print sheet */
+#sheet{display:none}
+@media print{
+  @page{size:A4;margin:14mm}
+  body{background:#fff;color:#000;font-size:11pt}
+  .inst,.status,.layout,.mtabs,.foot{display:none!important}
+  #sheet{display:block}
+  #sheet .ph{display:flex;align-items:center;gap:10px;border-bottom:2px solid #000;padding-bottom:6px}
+  #sheet .ph .seal{border-color:#000;color:#000}
+  #sheet h1{font-size:14pt;margin:8px 0 2px;text-align:center}
+  #sheet .sub{text-align:center;font-size:9.5pt;margin-bottom:8px}
+  #sheet table{font-size:9.5pt}
+  #sheet th,#sheet td{border:1px solid #000;padding:3px 6px}
+  #sheet .meta td{border:none;padding:2px 4px}
+  #sheet .dh td{background:#e8e8e8;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #sheet .sig{margin-top:36px;display:flex;justify-content:space-between}
+  #sheet .sig div{width:45%;border-top:1px solid #000;text-align:center;padding-top:4px;font-size:9.5pt}
+  #sheet .note{font-size:8.5pt;margin-top:10px}
+}
+</style>
+</head>
+<body>
+<div class="inst"><div class="in">
+  <div class="seal">FAST</div>
+  <div><div class="t1">Evaluación del funcionamiento</div><div class="t2">Rehabilitación psiquiátrica</div></div>
+  <div class="tool"><b>FAST</b>Functioning Assessment Short Test</div>
+</div></div>
+<div class="status"><div class="in" id="status"></div></div>
+<nav class="mtabs" id="mtabs"></nav>
+<div class="layout">
+  <aside class="side" id="side"></aside>
+  <main id="main"></main>
+</div>
+<div class="foot">Herramienta de apoyo clínico de acceso abierto. Las preguntas auxiliares y ejemplos no reemplazan la redacción oficial de la FAST (Rosa et al., 2007). Los datos se guardan solo en este navegador.</div>
+<div id="sheet"></div>
+
+<script>
+const ANCHOR = ["Ninguna dificultad","Poca dificultad","Bastante dificultad","Mucha dificultad"];
+const ANCHOR_DEF = [
+  "Autónomo, frecuencia, calidad y tiempo esperables, sin ayuda.",
+  "Algo más de esfuerzo, lentitud o alguna indicación ocasional. Repercusión pequeña.",
+  "Dificultad frecuente con repercusión clara. Recordatorios, supervisión parcial o ayuda concreta.",
+  "No puede, muy limitada, o requiere ayuda sustancial o permanente."
+];
+const DOMAINS = [
+  {k:"A",name:"Autonomía",items:[1,2,3,4]},
+  {k:"L",name:"Funcionamiento laboral",items:[5,6,7,8,9],
+   tip:"Si no trabaja: primero establecer si es por deterioro funcional o por causa externa (jubilación, estudio, labores domésticas elegidas, falta de empleo). No asignar máximos automáticamente."},
+  {k:"C",name:"Funcionamiento cognitivo",items:[10,11,12,13,14],
+   tip:"Explora la repercusión funcional. No sustituye evaluación neuropsicológica. Si el dominio está alterado e interfiere con la rehabilitación: derivar a Psicología."},
+  {k:"F",name:"Finanzas",items:[15,16]},
+  {k:"R",name:"Relaciones interpersonales",items:[17,18,19,20,21,22]},
+  {k:"O",name:"Ocio",items:[23,24]}
+];
+const ITEMS = {
+1:{t:"Encargarse de las tareas de la casa",w:"Limpieza, orden, preparación básica de alimentos, lavado de ropa y otras responsabilidades domésticas acordes con su contexto.",
+ q:["¿Qué tareas realiza habitualmente en casa o en el pabellón?","¿Las inicia por su cuenta o tienen que recordárselo?","¿Puede terminarlas adecuadamente?"],
+ e:["Ordena su habitación, lava su ropa o colabora en la cocina sin indicaciones.","Realiza las tareas, pero ocasionalmente necesita recordatorios o tarda más.","Solo realiza algunas tareas simples, requiere indicaciones frecuentes o las deja incompletas.","No participa o necesita que otra persona haga prácticamente todas las tareas."],
+ p:"No puntuar como dificultad que, por costumbre familiar o cultural, otra persona realice las tareas. Explorar si podría asumirlas."},
+2:{t:"Vivir solo",w:"Sostener una vida cotidiana segura sin supervisión continua: alimentación, autocuidado, medicación, organización, emergencias y mantenimiento del hogar.",
+ q:["¿Podría permanecer solo en casa durante varios días?","¿Qué cosas podría manejar sin ayuda y para cuáles necesitaría apoyo?","¿Recordaría comer, tomar su medicación, cerrar la puerta y acudir a sus citas?"],
+ e:["Puede vivir de manera independiente y resolver las necesidades habituales.","Puede vivir solo, pero necesita ayuda ocasional para trámites, compras complejas o imprevistos.","Podría permanecer solo parcialmente, pero necesita supervisión frecuente para rutina, medicación o alimentación.","No puede vivir solo de forma segura; requiere acompañamiento o supervisión permanente."],
+ p:"Hospitalizado o nunca vivió solo: puntuar la capacidad actual estimada y marcar «estimación clínica».",est:true},
+3:{t:"Hacer la compra",w:"Planificar lo necesario, desplazarse, seleccionar productos, pagar y regresar con las compras adecuadas.",
+ q:["Cuando necesita comprar alimentos o artículos personales, ¿puede hacerlo solo?","¿Prepara una lista o recuerda lo necesario?","¿Puede pagar y verificar el vuelto?"],
+ e:["Realiza compras habituales de manera independiente y adecuada.","Compra solo, pero puede olvidar algún producto o requerir una lista.","Necesita acompañamiento o ayuda para organizar, elegir o pagar.","No puede realizar una compra básica sin que otra persona se haga cargo."]},
+4:{t:"Cuidar de sí mismo",w:"Higiene, vestido, arreglo personal, alimentación básica y cuidado de la apariencia.",
+ q:["¿Se baña, cambia de ropa y se arregla por iniciativa propia?","¿Con qué frecuencia deben recordárselo?","¿Selecciona ropa adecuada y mantiene una higiene suficiente?"],
+ e:["Autocuidado adecuado y espontáneo.","Descuidos ocasionales o necesidad de algún recordatorio.","Requiere recordatorios frecuentes o ayuda parcial para sostener el autocuidado.","Abandono marcado o necesita asistencia directa y continua."]},
+5:{t:"Realizar un trabajo remunerado",w:"Acceder, mantener y cumplir las obligaciones básicas de un empleo pagado.",
+ q:["¿Actualmente realiza algún trabajo remunerado?","En caso de no trabajar, ¿la razón principal está relacionada con sus dificultades clínicas o funcionales?","¿Qué apoyo necesitaría para mantener un empleo?"],
+ e:["Mantiene un empleo sin dificultades funcionales relevantes.","Trabaja, pero con dificultades leves de puntualidad, organización o tolerancia.","Necesita adaptaciones importantes, apoyo frecuente o mantiene el empleo de forma inestable.","No puede sostener un empleo debido a su deterioro funcional actual (la enfermedad le impide trabajar)."],
+ p:"Desempleo por falta de oportunidades, estudios, jubilación, labores domésticas elegidas o mercado no equivale automáticamente a 3."},
+6:{t:"Acabar las tareas con la rapidez necesaria",w:"Ritmo de trabajo y capacidad para cumplir dentro del tiempo requerido. Valorar talleres o actividades estructuradas.",
+ q:["¿Termina las tareas dentro del tiempo esperado?","¿Necesita más tiempo que los demás?","¿Le llaman la atención por retrasos o acumulación de trabajo?"],
+ e:["Cumple los plazos y mantiene un ritmo adecuado.","Cierta lentitud, pero termina sin consecuencias importantes.","Retrasos frecuentes; necesita ayuda o reducción de carga.","No logra completar las tareas dentro de tiempos funcionalmente útiles."]},
+7:{t:"Trabajar en lo que estudió o para lo que se preparó",w:"Correspondencia entre formación, habilidades adquiridas y nivel ocupacional actual.",ne:"NE si nunca tuvo preparación o experiencia comparable.",
+ q:["¿Su trabajo corresponde a aquello para lo que estudió o se capacitó?","En caso contrario, ¿se debe a dificultades de salud y funcionamiento o a otras circunstancias?"],
+ e:["Trabaja en un área acorde con su formación o elección ocupacional.","Diferencia pequeña atribuible parcialmente a sus dificultades.","Función claramente inferior a su preparación debido al deterioro funcional.","No puede ejercer ninguna actividad relacionada con su formación por sus limitaciones actuales."],
+ p:"No penalizar cambios voluntarios de carrera, falta de vacantes, informalidad laboral o necesidad económica."},
+8:{t:"Recibir una remuneración acorde con el puesto",w:"Ocupar un puesto y obtener una remuneración congruente con responsabilidades y competencias.",ne:"NE si nunca tuvo empleo y no puede estimarse.",
+ q:["¿La remuneración corresponde al trabajo que realiza?","¿Sus dificultades le han obligado a aceptar funciones o ingresos claramente inferiores?"],
+ e:["Remuneración acorde con el puesto y las responsabilidades.","Diferencia leve asociada a alguna limitación.","Remuneración considerablemente menor porque solo puede asumir tareas reducidas.","Sin ingresos laborales o imposibilidad de ocupar un puesto remunerado por deterioro funcional."],
+ p:"No confundir desigualdad salarial, informalidad o precariedad del mercado con discapacidad individual."},
+9:{t:"Alcanzar el rendimiento esperado",w:"Calidad, productividad, constancia, cumplimiento de responsabilidades y necesidad de supervisión.",ne:"Valorar actividades estructuradas; si no hay ninguna, NE.",
+ q:["¿Cumple con la cantidad y calidad de trabajo que se espera?","¿Comete errores, falta con frecuencia o requiere supervisión especial?"],
+ e:["Rendimiento esperado sin apoyos extraordinarios.","Disminución leve, errores ocasionales o esfuerzo adicional.","Rendimiento claramente reducido, errores frecuentes o supervisión repetida.","No alcanza los requerimientos mínimos o no puede mantener el puesto."]},
+10:{t:"Concentrarse en una lectura o película",w:"Sostener la atención y seguir el contenido de una actividad narrativa.",
+ q:["Cuando lee una noticia o ve un programa, ¿puede seguirlo hasta el final?","¿Tiene que releer o retroceder porque pierde el hilo?","¿Después puede contar de qué trataba?"],
+ a:"Puede usarse un texto breve adecuado al nivel educativo, o preguntar por una actividad reciente.",
+ e:["Mantiene la atención y comprende el contenido.","Se distrae ocasionalmente, pero retoma y comprende.","Pierde con frecuencia el hilo, necesita releer o no completa la actividad.","No logra sostener la atención ni comprender contenidos breves."]},
+11:{t:"Hacer cálculos mentales",w:"Uso funcional de operaciones simples sin apoyo externo.",
+ q:["Si compra algo que cuesta S/ 7 y paga con S/ 10, ¿cuánto deberían devolverle?","Si tiene S/ 20 y gasta S/ 6, ¿cuánto le queda?","¿Puede calcular aproximadamente cuánto gastará en varias compras?"],
+ e:["Resuelve cálculos cotidianos simples con precisión.","Tarda más o comete errores aislados que corrige.","Errores frecuentes; necesita papel, calculadora o ayuda.","No puede resolver cálculos cotidianos muy simples."],
+ p:"Ajustar los ejemplos al nivel educativo y a las demandas habituales del usuario."},
+12:{t:"Resolver adecuadamente un problema",w:"Identificar el problema, generar alternativas y seleccionar una respuesta práctica.",
+ q:["Imagine que llega al hospital y descubre que olvidó su documento. ¿Qué podría hacer?","Si se queda sin medicación durante un fin de semana, ¿cómo resolvería la situación?"],
+ e:["Identifica varias alternativas realistas y elige una apropiada.","Encuentra una solución adecuada con algo de tiempo o una pista mínima.","Propone soluciones poco viables o necesita orientación considerable.","No identifica una respuesta funcional o queda completamente bloqueado."]},
+13:{t:"Recordar nombres de personas nuevas",w:"Registro y recuperación de información social nueva.",
+ q:["Cuando conoce a alguien nuevo, ¿recuerda su nombre después de unos minutos o al día siguiente?","¿Qué hace para recordarlo?"],
+ a:"Puede presentarse un nombre durante la entrevista y preguntarlo después, sin convertirlo en prueba formal.",
+ e:["Recuerda normalmente nombres nuevos relevantes.","Olvida ocasionalmente, pero mejora con asociación o repetición.","Olvida con frecuencia incluso después de varias presentaciones.","Prácticamente no retiene nombres nuevos."]},
+14:{t:"Aprender información nueva",w:"Adquirir y utilizar instrucciones, procedimientos o conocimientos recientes.",
+ q:["¿Ha aprendido recientemente a usar un teléfono, una ruta, una actividad o una indicación nueva?","¿Cuántas repeticiones necesitó?","¿Pudo hacerlo después sin ayuda?"],
+ e:["Aprende y aplica información nueva de manera esperable.","Necesita alguna repetición adicional.","Requiere múltiples repeticiones, demostración y apoyo posterior.","No logra retener ni aplicar incluso información sencilla."]},
+15:{t:"Manejar el propio dinero",w:"Controlar ingresos, realizar pagos, organizar un presupuesto, verificar el vuelto y usar el dinero de manera segura.",
+ q:["¿Quién administra su dinero?","¿Puede separar dinero para comida, transporte y otros gastos?","¿Paga sus cuentas y verifica el vuelto?"],
+ e:["Administra el dinero de manera independiente y segura.","Necesita alguna orientación o comete errores pequeños.","Requiere supervisión frecuente o entrega parte del dinero a un tercero.","No puede manejar dinero de forma segura; otra persona debe administrarlo."]},
+16:{t:"Realizar compras equilibradas",w:"Priorizar necesidades y evitar gastos desproporcionados, impulsivos o incompatibles con el presupuesto.",
+ q:["Cuando recibe dinero, ¿cómo decide qué comprar primero?","¿Alguna vez gasta demasiado en algo y luego no tiene para comida o transporte?"],
+ e:["Compras acordes con sus necesidades y presupuesto.","Alguna compra poco conveniente sin consecuencias importantes.","Gastos inadecuados frecuentes que afectan otras necesidades.","Compras gravemente desorganizadas, impulsivas o riesgosas; necesita control por terceros."]},
+17:{t:"Mantener una amistad",w:"Conservar vínculos de amistad mediante contacto, reciprocidad y resolución de dificultades.",
+ q:["¿Tiene alguna persona que considere amiga?","¿Con qué frecuencia se comunican?","¿Ha podido conservar amistades durante el último tiempo?"],
+ e:["Mantiene vínculos recíprocos y adecuados.","Contacto menos frecuente o alguna dificultad menor.","Vínculos escasos, inestables o sostenidos principalmente por la otra persona.","No logra mantener amistades debido a sus dificultades funcionales."]},
+18:{t:"Participar en actividades sociales",w:"Participación en reuniones, grupos, talleres, celebraciones o actividades comunitarias.",
+ q:["¿Ha participado en alguna reunión, taller o actividad con otras personas?","¿Asiste por iniciativa propia?","¿Permanece e interactúa durante la actividad?"],
+ e:["Participa con regularidad y de manera adecuada.","Participa menos o con incomodidad leve.","Asistencia infrecuente, pasiva o solo con acompañamiento.","Evita o no puede participar en actividades sociales."]},
+19:{t:"Llevarse bien con personas cercanas",w:"Calidad de las relaciones con familiares, amigos, cuidadores o compañeros próximos.",
+ q:["¿Cómo se lleva con las personas más cercanas?","¿Tienen discusiones frecuentes?","¿Puede conversar y llegar a acuerdos?"],
+ e:["Relaciones estables y resolución adecuada de desacuerdos.","Tensiones ocasionales sin repercusión importante.","Conflictos frecuentes, comunicación limitada o distanciamiento.","Relaciones gravemente deterioradas, hostiles o prácticamente inexistentes por sus dificultades."]},
+20:{t:"Convivencia familiar",w:"Adaptación a normas, responsabilidades, privacidad y comunicación en el hogar o unidad de convivencia.",
+ q:["¿Cómo es vivir con su familia o con las personas de su pabellón?","¿Respeta horarios y espacios?","¿Participa en responsabilidades y decisiones?"],
+ e:["Convivencia adecuada y cooperación suficiente.","Dificultades menores o necesidad ocasional de mediación.","Conflictos repetidos, dependencia excesiva o escasa participación.","Convivencia muy disfuncional, imposible o que requiere supervisión continua."]},
+21:{t:"Relaciones sexuales satisfactorias",w:"Funcionamiento íntimo y sexual satisfactorio para la persona, cuando resulte pertinente y deseado.",
+ q:["En caso de que desee tener una vida íntima o de pareja, ¿ha tenido dificultades para establecerla o mantenerla de manera satisfactoria?"],
+ e:["Funcionamiento íntimo satisfactorio para sus preferencias y circunstancias.","Dificultad leve o esporádica.","Dificultad persistente que afecta significativamente la relación o la satisfacción.","Imposibilidad funcional marcada para mantener relaciones íntimas deseadas."],
+ p:"No tener pareja, no haber iniciado relaciones sexuales, optar por la abstinencia o no expresar interés no equivale por sí mismo a deterioro. Valorar dificultad, no frecuencia."},
+22:{t:"Defender los propios intereses",w:"Asertividad: expresar necesidades, establecer límites, pedir ayuda y proteger derechos.",
+ q:["Cuando no está de acuerdo, ¿puede expresarlo?","¿Puede decir que no cuando algo le perjudica?","¿Sabe pedir ayuda o reclamar cuando corresponde?"],
+ e:["Expresa y defiende sus intereses adecuadamente.","Cierta inseguridad, pero logra hacerlo.","Suele ceder, callar o necesita apoyo para expresarse.","No puede proteger sus intereses, es altamente vulnerable o responde de manera completamente inadecuada."]},
+23:{t:"Practicar deporte o ejercicio",w:"Actividad física acorde con edad, salud y preferencias. No evalúa rendimiento competitivo.",
+ q:["¿Realiza caminatas, ejercicios, deporte, baile u otra actividad física?","¿Con qué frecuencia?","¿Qué le impide realizarla?"],
+ e:["Actividad física regular acorde con sus condiciones.","Menos frecuente o con dificultad leve.","Muy limitada; necesita motivación, adaptación o acompañamiento frecuente.","No realiza actividad física debido a un deterioro funcional significativo."],
+ p:"Diferenciar limitación psiquiátrica de contraindicación médica o discapacidad física. Registrar la limitación física; puede motivar derivación a Terapia Física.",fis:true},
+24:{t:"Tener una afición",w:"Actividad elegida por interés o disfrute: música, lectura, manualidades, jardinería, tecnología, cocina, juegos, colecciones u otras.",
+ q:["¿Qué actividad realiza porque le gusta, no porque esté obligado?","¿Con qué frecuencia la practica?","¿La disfruta y puede sostenerla?"],
+ e:["Identifica y practica una afición con regularidad.","Conserva el interés, pero la realiza con menor frecuencia.","Apenas participa, necesita mucha estimulación o abandona rápidamente.","No identifica ni realiza ninguna actividad de interés debido a su deterioro funcional."]}
+};
+
+
+const KEY="fast-app-v2", HKEY="fast-hist-v1";
+const LAB=["Trabaja actualmente","Deterioro funcional","Jubilación","Estudia","Labores domésticas elegidas","Falta de empleo / mercado","Otra razón externa"];
+const CTX=["Ambulatorio","Hospitalización","Larga estancia","Hospital de día / talleres"];
+const FUENTES=[["usuario","Usuario"],["familiar","Familiar / cuidador"],["hc","Historia clínica"],["equipo","Observación del equipo"],["registros","Registros / módulos"]];
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+function blank(mode){return {view:"datos",mode:mode||"entrevista",auto:true,cur:1,
+  meta:{id:"",hc:"",edad:"",sexo:"",dx:"",servicio:"",fecha:today(),evaluador:"",tipo:"Ingreso",contexto:"Ambulatorio",
+  fuentes:{usuario:true,familiar:false,hc:false,equipo:false,registros:false},noTrabaja:"",discrepancia:""},
+  r:{},notes:{},est:{},fis:false}}
+function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v||d}catch(e){return d}}
+let S=load(KEY,blank()), H=load(HKEY,[]);
+if(!S.meta.tipo){S=Object.assign(blank(),S,{meta:Object.assign(blank().meta,S.meta)})}
+let savedTimer;
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(S));localStorage.setItem(HKEY,JSON.stringify(H))}catch(e){}
+  const el=document.getElementById("saved");if(el){el.classList.add("show");clearTimeout(savedTimer);savedTimer=setTimeout(()=>el.classList.remove("show"),900)}
+}
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const domOf=n=>DOMAINS.find(d=>d.items.includes(n));
+const ALL=Array.from({length:24},(_,i)=>i+1);
+const SHORT={A:"Autonomía",L:"Laboral",C:"Cognitivo",F:"Finanzas",R:"Relaciones",O:"Ocio"};
+const COL=["var(--s0)","var(--s1)","var(--s2)","var(--s3)"];
+
+function calc(st){st=st||S;let tot=0,ans=0,ne=0;
+  const per=DOMAINS.map(d=>{let s=0,a=0,x=0;d.items.forEach(i=>{const v=st.r[i];if(v==="NE"){x++;ne++}else if(v!==undefined){s+=v;a++;tot+=v;ans++}});return{...d,s,a,x,max:d.items.length*3,done:a+x}});
+  return{tot,ans,ne,done:ans+ne,per}}
+function band(t){if(t<=11)return["Sin deterioro","var(--s0)"];if(t<=20)return["Deterioro leve","var(--s1)"];if(t<=40)return["Deterioro moderado","var(--s2)"];return["Deterioro grave","var(--s3)"]}
+
+/* ---------- chrome ---------- */
+function renderStatus(){
+  const c=calc(),m=S.meta;
+  document.getElementById("status").innerHTML=`
+   <span class="chip">👤 ${esc(m.id||"Sin ID")}</span>
+   <div class="prog"><div class="bar"><i style="width:${c.done/24*100}%"></i></div><small>${c.done} de 24 ítems</small></div>
+   <span class="tot">${c.tot}<small>/72${c.ne?` · ${c.ne} NE`:""}</small></span>
+   <div class="seg" role="group" aria-label="Modo de llenado">
+     <button class="${S.mode==="entrevista"?"on":""}" onclick="setMode('entrevista')">Entrevista</button>
+     <button class="${S.mode==="rapido"?"on":""}" onclick="setMode('rapido')">Registro rápido</button>
+   </div>
+   <span class="saved" id="saved">Guardado ✓</span>`;
+}
+function side(){
+  const c=calc();
+  const curK=S.view==="item"?"d"+domOf(S.cur).k:S.view;
+  let h=`<button class="st ${curK==="datos"?"on":""}" onclick="go('datos')"><span class="num ${S.meta.id?"done":""}">✎</span>Datos de la evaluación</button>`;
+  c.per.forEach(d=>{
+    const on=curK==="d"+d.k;
+    h+=`<button class="st ${on?"on":""}" onclick="go('d${d.k}')"><span class="num ${d.done===d.items.length?"done":""}">${d.done===d.items.length?"✓":d.k}</span>${d.name}<span class="sub">${d.s}/${d.max}</span></button>`;
+    if(on&&S.mode==="entrevista")h+=`<div class="dots">${d.items.map(i=>{const v=S.r[i];const bg=v===undefined?"":v==="NE"?"background:var(--ne);color:#fff;border-color:var(--ne)":`background:${COL[v]};color:#fff;border-color:transparent`;return `<button class="${i===S.cur?"cur":""}" style="${bg}" onclick="goItem(${i})" title="${esc(ITEMS[i].t)}">${i}</button>`}).join("")}</div>`;
+  });
+  h+=`<button class="st ${curK==="res"?"on":""}" onclick="go('res')"><span class="num ${c.done===24?"done":""}">Σ</span>Resultado<span class="sub">${c.tot}</span></button>`;
+  document.getElementById("side").innerHTML=h;
+  const tabs=[["datos","Datos"]].concat(DOMAINS.map(d=>["d"+d.k,SHORT[d.k]])).concat([["res","Resultado"]]);
+  document.getElementById("mtabs").innerHTML=tabs.map(([k,l])=>`<button class="${curK===k?"on":""}" onclick="go('${k}')">${l}</button>`).join("");
+}
+function setMode(m){S.mode=m;if(S.view==="item"||S.view==="quick")S.view=m==="rapido"?"quick":"item";save();render()}
+function go(k){
+  if(k==="datos"||k==="res"){S.view=k;save();render();toTop();return}
+  const d=DOMAINS.find(x=>"d"+x.k===k);
+  if(S.mode==="rapido"){S.view="quick";save();render();const el=document.getElementById("g"+d.k);if(el)el.scrollIntoView({block:"start"});return}
+  S.view="item";S.cur=d.items.find(i=>S.r[i]===undefined)||d.items[0];save();render();toTop();
+}
+function goItem(n){S.view=S.mode==="rapido"?"quick":"item";S.cur=n;save();render();toTop()}
+function toTop(){window.scrollTo({top:0,behavior:"auto"})}
+
+/* ---------- datos ---------- */
+function viewDatos(){
+  const m=S.meta,f=m.fuentes;
+  const inp=(k,l,t="text",ph="")=>`<label class="f">${l}<input type="${t}" value="${esc(m[k])}" placeholder="${ph}" oninput="S.meta['${k}']=this.value;save();renderStatus()"></label>`;
+  const tog=(k,opts)=>`<div class="toggles">${opts.map(o=>`<button class="tog ${m[k]===o?"on":""}" onclick="S.meta['${k}']=S.meta['${k}']===this.dataset.v?'':this.dataset.v;save();render()" data-v="${esc(o)}">${esc(o)}</button>`).join("")}</div>`;
+  const prev=H.filter(h=>h.meta.id&&m.id&&h.meta.id.trim().toLowerCase()===m.id.trim().toLowerCase());
+  return `<div class="card">
+   <div class="eyebrow">Paso 1</div><h2>Datos de la evaluación</h2>
+   <p class="what">Use iniciales o número de historia. No escriba el nombre completo.</p>
+   <div class="grid">
+     ${inp("id","ID / iniciales","text","p. ej. JFC-01")}
+     ${inp("hc","N.º de historia clínica")}
+     ${inp("edad","Edad","number")}
+     ${inp("fecha","Fecha","date")}
+     ${inp("dx","Diagnóstico (CIE-10)","text","p. ej. F20.0")}
+     ${inp("servicio","Pabellón / servicio")}
+     ${inp("evaluador","Evaluador")}
+   </div>
+   <div class="lbl">Sexo</div>${tog("sexo",["Femenino","Masculino"])}
+   <div class="lbl">Momento de la evaluación</div>${tog("tipo",["Ingreso","Seguimiento","Alta"])}
+   <div class="lbl">Contexto</div>${tog("contexto",CTX)}
+   ${m.contexto==="Hospitalización"||m.contexto==="Larga estancia"?`<div class="box tip">Valore el desempeño real en el entorno y, cuando el ítem lo requiera, la mejor estimación de su capacidad fuera de él. Registre cuánto depende de la estructura, supervisión o sustitución de tareas por el personal.</div>`:""}
+   <div class="lbl">Fuentes de información</div>
+   <div class="toggles">${FUENTES.map(([k,l])=>`<button class="tog ${f[k]?"on":""}" onclick="S.meta.fuentes['${k}']=!S.meta.fuentes['${k}'];save();render()">${f[k]?"✓ ":""}${l}</button>`).join("")}</div>
+   <div class="lbl">Discrepancias entre fuentes <span style="text-transform:none;font-weight:400">(opcional)</span></div>
+   <textarea placeholder="Qué difiere y qué fuente sustenta el puntaje" oninput="S.meta.discrepancia=this.value;save()">${esc(m.discrepancia)}</textarea>
+   ${prev.length?`<div class="box tip"><b>Este ID tiene ${prev.length} evaluación(es) guardada(s).</b> Última: ${esc(prev[0].meta.fecha)} · total ${prev[0].tot}/72. En Resultado verá el cambio.</div>`:""}
+  </div>
+  <div class="card">
+   <h3>Reglas comunes antes de empezar</h3>
+   <ul style="margin:0;padding-left:20px;display:grid;gap:4px;font-size:15px">
+    <li>Puntúe el funcionamiento <b>habitual</b>, no un episodio aislado.</li>
+    <li>Precise qué hace realmente, con qué frecuencia, calidad y cuánto apoyo necesita.</li>
+    <li>Diferencie incapacidad de falta de oportunidad, elección, normas culturales o barreras.</li>
+    <li>Pregunte qué ocurre cuando no recibe ayuda o supervisión.</li>
+    <li>«Nunca lo hizo» no equivale a «no puede hacerlo».</li>
+    <li>No atribuya toda dificultad al trastorno mental: considere causas médicas, físicas, cognitivas o efectos adversos.</li>
+   </ul>
+  </div>
+  <div class="navbtns"><span></span><button class="primary" onclick="S.mode==='rapido'?(S.view='quick',save(),render(),toTop()):goItem(S.r[1]===undefined?1:(ALL.find(i=>S.r[i]===undefined)||1))">${calc().done?"Continuar":"Empezar"} →</button></div>
+  ${H.length?viewHist():""}`;
+}
+function viewHist(){
+  return `<div class="card" style="margin-top:14px"><h3>Evaluaciones guardadas en este equipo</h3><div class="hist">${H.map((h,i)=>`<div class="h"><b>${esc(h.meta.id||"Sin ID")}</b><span>${esc(h.meta.fecha)} · ${esc(h.meta.tipo||"")}</span><span class="pill" style="background:${band(h.tot)[1]};font-size:12px;padding:2px 8px">${h.tot}/72</span><span class="sp"></span><button class="ghost" onclick="loadHist(${i})">Abrir</button><button class="ghost" onclick="delHist(${i})" aria-label="Eliminar">✕</button></div>`).join("")}</div>
+  <p class="muted" style="margin:8px 0 0">Solo en este navegador. Para conservarlas, descargue el CSV.</p></div>`;
+}
+function loadHist(i){if(calc().done&&!confirm("¿Reemplazar la evaluación en curso por la guardada?"))return;const h=H[i];S=Object.assign(blank(S.mode),JSON.parse(JSON.stringify(h)),{view:"res",mode:S.mode});save();render();toTop()}
+function delHist(i){if(confirm(`¿Eliminar la evaluación de ${H[i].meta.id||"Sin ID"} del ${H[i].meta.fecha}? No se puede deshacer.`)){H.splice(i,1);save();render()}}
+
+/* ---------- interview ---------- */
+function laborGate(){
+  const v=S.meta.noTrabaja;
+  return `<div class="box tip" style="margin:0 0 14px"><b>Antes de los ítems laborales: ¿trabaja actualmente?</b>
+   <div class="toggles" style="margin-top:8px">${LAB.map(o=>`<button class="tog ${v===o?"on":""}" data-v="${esc(o)}" onclick="S.meta.noTrabaja=S.meta.noTrabaja===this.dataset.v?'':this.dataset.v;save();render()">${o==="Trabaja actualmente"?"Sí, trabaja":o==="Deterioro funcional"?"No, por deterioro funcional":"No: "+o.toLowerCase()}</button>`).join("")}</div>
+   ${v&&v!=="Trabaja actualmente"&&v!=="Deterioro funcional"?`<div style="margin-top:8px">No trabaja por una causa externa: no asigne 3 automáticamente. Valore talleres o actividades estructuradas.</div>`:""}</div>`;
+}
+function viewItem(){
+  const n=S.cur,it=ITEMS[n],d=domOf(n),v=S.r[n],pos=d.items.indexOf(n)+1;
+  let opts=it.e.map((ex,i)=>`<button class="opt ${v===i?"sel":""}" data-v="${i}" onclick="setR(${n},${i})" aria-pressed="${v===i}"><b>${i}</b><span><strong>${ANCHOR[i]}</strong><small>${esc(ex)}</small></span></button>`).join("");
+  if(it.ne)opts+=`<button class="opt ${v==="NE"?"sel":""}" data-v="NE" onclick="setR(${n},'NE')" aria-pressed="${v==="NE"}"><b>NE</b><span><strong>No evaluable</strong><small>${esc(it.ne)}</small></span></button>`;
+  return `${n===5?laborGate():""}
+  ${n===10?`<div class="box tip" style="margin:0 0 14px">${esc(DOMAINS[2].tip)}</div>`:""}
+  <div class="card">
+   <div class="eyebrow">${d.name} · ${pos} de ${d.items.length} · Ítem ${n} de 24</div>
+   <h2>${n}. ${esc(it.t)}</h2>
+   <p class="what">${esc(it.w)}</p>
+   <div class="lbl">Preguntas sugeridas</div>
+   <ul class="qs">${it.q.map(q=>`<li>${esc(q)}</li>`).join("")}</ul>
+   ${it.a?`<div class="box tip"><b>Aplicación práctica.</b> ${esc(it.a)}</div>`:""}
+   ${it.p?`<div class="box warn"><b>Precaución.</b> ${esc(it.p)}</div>`:""}
+   <div class="lbl">Puntuación</div>
+   <div class="opts">${opts}</div>
+   ${it.est?`<label class="chk"><input type="checkbox" ${S.est[n]?"checked":""} onchange="S.est[${n}]=this.checked;save()">Estimación clínica (hospitalizado o nunca vivió solo)</label>`:""}
+   ${it.fis?`<label class="chk"><input type="checkbox" ${S.fis?"checked":""} onchange="S.fis=this.checked;save()">Limitación física o contraindicación médica (considerar Terapia Física)</label>`:""}
+   <div class="lbl">Nota del ítem <span style="text-transform:none;font-weight:400">(opcional)</span></div>
+   <textarea placeholder="Fuente, discrepancia o contexto" oninput="S.notes[${n}]=this.value;save()">${esc(S.notes[n]||"")}</textarea>
+  </div>
+  <div class="navbtns">
+   <button onclick="${n>1?`goItem(${n-1})`:`go('datos')`}">← ${n>1?"Ítem "+(n-1):"Datos"}</button>
+   <label class="chk" style="margin:0;font-size:13px"><input type="checkbox" ${S.auto?"checked":""} onchange="S.auto=this.checked;save()">Avanzar al puntuar</label>
+   <button class="primary" onclick="${n<24?`goItem(${n+1})`:`go('res')`}">${n<24?"Ítem "+(n+1):"Ver resultado"} →</button>
+  </div>
+  <p class="kbd" style="margin-top:10px"><kbd>0</kbd>–<kbd>3</kbd> puntúan${it.ne?" · <kbd>N</kbd> no evaluable":""} · <kbd>←</kbd> <kbd>→</kbd> navegan · clic otra vez para borrar</p>`;
+}
+function setR(n,v){
+  if(S.r[n]===v){delete S.r[n];save();render();return}
+  S.r[n]=v;save();
+  if(S.view==="item"&&S.auto){render();setTimeout(()=>{const nx=ALL.find(i=>i>n&&S.r[i]===undefined)||(n<24?n+1:null);nx?goItem(nx):go("res")},200)}
+  else render();
+}
+
+/* ---------- quick ---------- */
+function viewQuick(){
+  const c=calc();
+  return `<div class="card"><div class="eyebrow">Registro rápido</div><h2>Puntúe los 24 ítems</h2>
+   <p class="what">Para transcribir una entrevista ya hecha. Toque el nombre de un ítem para ver sus ejemplos en modo Entrevista.</p>
+   ${S.meta.noTrabaja===""?`<div class="box tip" style="margin-top:0">Falta registrar si trabaja actualmente (Datos o ítem 5 en Entrevista).</div>`:""}
+   ${c.per.map(d=>`<div class="qgroup" id="g${d.k}"><div class="qhead"><h3 style="margin:0">${d.name}</h3><span class="sub">${d.s}/${d.max}</span></div>
+   ${d.items.map(i=>`<div class="qrow"><span class="n">${i}</span><span class="tt" onclick="S.mode='entrevista';goItem(${i})" title="${esc(ITEMS[i].w)}">${esc(ITEMS[i].t)}</span>
+     <span class="qseg">${[0,1,2,3].map(v=>`<button data-v="${v}" class="${S.r[i]===v?"on":""}" onclick="setR(${i},${v})" title="${ANCHOR[v]}: ${esc(ITEMS[i].e[v])}" aria-label="Ítem ${i}: ${v}">${v}</button>`).join("")}${ITEMS[i].ne?`<button data-v="NE" class="ne ${S.r[i]==="NE"?"on":""}" onclick="setR(${i},'NE')" title="${esc(ITEMS[i].ne)}">NE</button>`:""}</span></div>`).join("")}</div>`).join("")}
+  </div>
+  <div class="navbtns"><button onclick="go('datos')">← Datos</button><button class="primary" onclick="go('res')">Ver resultado →</button></div>`;
+}
+
+/* ---------- results ---------- */
+function alerts(c){
+  const a=[];const miss=ALL.filter(i=>S.r[i]===undefined);
+  if(miss.length)a.push(["warn",`Faltan ${miss.length} ítems: ${miss.join(", ")}.`]);
+  if(c.ne)a.push(["warn",`${c.ne} ítem(s) no evaluable(s). El total suma solo los ítems puntuados: interprete las bandas con cautela.`]);
+  if([10,11,12,13,14].some(i=>S.r[i]>=2))a.push(["tip",`Dominio cognitivo con ítems ≥2 (subtotal ${c.per[2].s}/15). Si interfiere con los objetivos rehabilitadores: derivar a Psicología.`]);
+  if(S.fis)a.push(["tip","Limitación física o médica registrada en el ítem 23. Considerar Terapia Física."]);
+  if(S.est[2])a.push(["tip","Ítem 2 puntuado como estimación clínica."]);
+  const nt=S.meta.noTrabaja;
+  if(nt&&nt!=="Trabaja actualmente"&&nt!=="Deterioro funcional"&&[5,6,7,8,9].some(i=>S.r[i]===3))a.push(["warn",`No trabaja por «${nt}» y hay ítems laborales en 3. Confirme que reflejan deterioro funcional y no la causa externa.`]);
+  return a;
+}
+function prevOf(){const id=(S.meta.id||"").trim().toLowerCase();if(!id)return null;return H.filter(h=>(h.meta.id||"").trim().toLowerCase()===id&&!(h.meta.fecha===S.meta.fecha&&h.meta.tipo===S.meta.tipo)).sort((a,b)=>b.meta.fecha.localeCompare(a.meta.fecha))[0]||null}
+function viewRes(){
+  const c=calc(),[b,col]=band(c.tot),al=alerts(c),p=prevOf();
+  const pct=x=>Math.min(100,x/72*100);
+  return `<div class="card">
+   <div class="eyebrow">Resultado · ${esc(S.meta.id||"Sin ID")} · ${esc(S.meta.fecha)}</div>
+   <div class="hero" style="margin-top:6px">
+     <div class="big">${c.tot}<small>/72</small></div>
+     <div><span class="pill" style="background:${col}">${b}</span><div class="muted" style="margin-top:4px">Mayor puntaje = mayor deterioro</div>
+     ${p?`<div style="margin-top:6px">Previa (${esc(p.meta.fecha)}): <b>${p.tot}</b> → cambio <span class="delta" style="color:${c.tot<p.tot?"var(--s0)":c.tot>p.tot?"var(--s3)":"var(--muted)"}">${c.tot-p.tot>0?"+":""}${c.tot-p.tot}</span></div>`:""}</div>
+   </div>
+   <div class="gauge">
+     <span style="width:${12/73*100}%;background:var(--s0)"></span><span style="width:${9/73*100}%;background:var(--s1)"></span><span style="width:${20/73*100}%;background:var(--s2)"></span><span style="width:${32/73*100}%;background:var(--s3)"></span>
+     <i class="gmark" style="left:${(c.tot+.5)/73*100}%"></i>
+   </div>
+   <div class="gl"><span>0</span><span>11</span><span>20</span><span>40</span><span>72</span></div>
+   <p class="muted">Bandas referenciales de trastorno bipolar (Bonnín et al., 2018): 0–11 sin deterioro · 12–20 leve · 21–40 moderado · &gt;40 grave. No validadas para todas las poblaciones.</p>
+   <div class="lbl">Por dominio (% del máximo)</div>
+   ${c.per.map(d=>{const q=d.s/d.max;const cc=q<.17?COL[0]:q<.34?COL[1]:q<.6?COL[2]:COL[3];const pd=p?calc(p).per.find(x=>x.k===d.k).s:null;return `<div class="dbar"><span>${d.name}</span><span class="tr"><i style="width:${q*100}%;background:${cc}"></i></span><span class="v">${d.s}/${d.max}${d.x?` <span class="muted">·${d.x}NE</span>`:""}${pd!==null?`<br><span class="muted" style="font-weight:400">antes ${pd}</span>`:""}</span></div>`}).join("")}
+   ${al.map(([k,t])=>`<div class="box ${k}">${esc(t)}</div>`).join("")}
+  </div>
+  <div class="card">
+   <h3>Resumen para la historia clínica</h3>
+   <pre id="sum">${esc(summaryText())}</pre>
+   <div class="row">
+    <button class="primary" onclick="copySum(this)">Copiar resumen</button>
+    <button onclick="window.print()">Imprimir hoja</button>
+    <button onclick="dlCSV()">Descargar CSV</button>
+    <span style="flex:1"></span>
+    <button onclick="saveHist(this)">Guardar en historial</button>
+    <button onclick="nueva()">Nueva evaluación</button>
+   </div>
+  </div>
+  ${H.length?viewHist():""}`;
+}
+function summaryText(){
+  const c=calc(),m=S.meta,[b]=band(c.tot),p=prevOf();
+  const fu=FUENTES.filter(([k])=>m.fuentes[k]).map(([,l])=>l.toLowerCase()).join(", ");
+  let t=`FAST (Functioning Assessment Short Test) — ${m.tipo} — ${m.fecha}\n`;
+  t+=`ID: ${m.id||"—"}${m.hc?` · HC ${m.hc}`:""}${m.edad?` · ${m.edad} a`:""}${m.sexo?` · ${m.sexo}`:""}${m.dx?` · Dx ${m.dx}`:""}\n`;
+  t+=`Contexto: ${m.contexto}${m.servicio?` (${m.servicio})`:""} · Evaluador: ${m.evaluador||"—"}\nFuentes: ${fu||"—"}\n\n`;
+  c.per.forEach(d=>{t+=`${d.name}: ${d.s}/${d.max}${d.x?` (${d.x} NE)`:""}\n`});
+  t+=`TOTAL: ${c.tot}/72${c.ne?` (${c.ne} NE)`:""} — ${b} (bandas referenciales)\n`;
+  if(p)t+=`Evaluación previa ${p.meta.fecha}: ${p.tot}/72 (cambio ${c.tot-p.tot>0?"+":""}${c.tot-p.tot})\n`;
+  t+=`\nÍtems: ${ALL.map(i=>`${i}:${S.r[i]===undefined?"—":S.r[i]}`).join(" ")}\n`;
+  const notas=Object.entries(S.notes).filter(([,v])=>v&&v.trim()).map(([k,v])=>`  ${k}. ${ITEMS[k].t}: ${v.trim()}`);
+  if(notas.length)t+=`\nNotas:\n${notas.join("\n")}\n`;
+  if(m.noTrabaja)t+=`\nSituación laboral: ${m.noTrabaja==="Deterioro funcional"?"no trabaja por deterioro funcional":m.noTrabaja==="Trabaja actualmente"?"trabaja":"no trabaja ("+m.noTrabaja.toLowerCase()+")"}\n`;
+  if(m.discrepancia&&m.discrepancia.trim())t+=`Discrepancias entre fuentes: ${m.discrepancia.trim()}\n`;
+  const al=alerts(c).filter(([,x])=>!x.startsWith("Faltan"));
+  if(al.length)t+=`\nObservaciones:\n${al.map(([,x])=>"  - "+x).join("\n")}\n`;
+  return t;
+}
+function copySum(btn){const t=summaryText();const ok=()=>{btn.textContent="Copiado ✓";setTimeout(()=>btn.textContent="Copiar resumen",1500)};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,()=>fallbackCopy(t,ok));else fallbackCopy(t,ok)}
+function fallbackCopy(t,ok){const ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");ok()}catch(e){}ta.remove()}
+function rowOf(st){const c=calc(st),m=st.meta;return [m.id,m.hc,m.edad,m.sexo,m.dx,m.servicio,m.fecha,m.tipo,m.evaluador,m.contexto,m.noTrabaja].concat(ALL.map(i=>st.r[i]===undefined?"":st.r[i])).concat(c.per.map(d=>d.s),[c.tot,c.ne])}
+function dlCSV(){
+  const h=["id","hc","edad","sexo","dx","servicio","fecha","momento","evaluador","contexto","situacion_laboral"].concat(ALL.map(i=>"fast"+i)).concat(DOMAINS.map(d=>"dom_"+SHORT[d.k].toLowerCase()),["total","n_ne"]);
+  const rows=[rowOf(S)];H.forEach(x=>{if(!(x.meta.id===S.meta.id&&x.meta.fecha===S.meta.fecha&&x.meta.tipo===S.meta.tipo))rows.push(rowOf(x))});
+  const q=x=>`"${String(x??"").replace(/"/g,'""')}"`;
+  const blob=new Blob(["﻿"+h.join(",")+"\n"+rows.map(r=>r.map(q).join(",")).join("\n")+"\n"],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`FAST_${(S.meta.id||"sinID").replace(/\W+/g,"_")}_${S.meta.fecha}.csv`;document.body.appendChild(a);a.click();a.remove();
+}
+function snapshot(){const c=calc();return JSON.parse(JSON.stringify({meta:S.meta,r:S.r,notes:S.notes,est:S.est,fis:S.fis,tot:c.tot}))}
+function saveHist(btn){
+  const s=snapshot();const i=H.findIndex(h=>h.meta.id===s.meta.id&&h.meta.fecha===s.meta.fecha&&h.meta.tipo===s.meta.tipo);
+  if(i>=0)H[i]=s;else H.unshift(s);save();render();
+}
+function nueva(){
+  if(calc().done&&!confirm("¿Empezar una nueva evaluación? La actual se guarda en el historial."))return;
+  if(calc().done){const s=snapshot();const i=H.findIndex(h=>h.meta.id===s.meta.id&&h.meta.fecha===s.meta.fecha&&h.meta.tipo===s.meta.tipo);if(i>=0)H[i]=s;else H.unshift(s)}
+  const ev=S.meta.evaluador,mode=S.mode;S=blank(mode);S.meta.evaluador=ev;save();render();toTop();
+}
+
+/* ---------- print sheet ---------- */
+function sheet(){
+  const c=calc(),m=S.meta,[b]=band(c.tot);
+  const fu=FUENTES.filter(([k])=>m.fuentes[k]).map(([,l])=>l).join(", ");
+  const rows=DOMAINS.map(d=>`<tr class="dh"><td colspan="2">${d.name}</td><td style="text-align:center">${c.per.find(x=>x.k===d.k).s} / ${d.max}</td></tr>`+d.items.map(i=>`<tr><td style="width:28px;text-align:center">${i}</td><td>${esc(ITEMS[i].t)}${S.notes[i]&&S.notes[i].trim()?`<br><i style="font-size:8.5pt">${esc(S.notes[i].trim())}</i>`:""}</td><td style="width:80px;text-align:center"><b>${S.r[i]===undefined?"":S.r[i]}</b></td></tr>`).join("")).join("");
+  const al=alerts(c).filter(([,x])=>!x.startsWith("Faltan"));
+  document.getElementById("sheet").innerHTML=`
+   <div class="ph"><div class="seal">FAST</div><div><b>Institución:</b> ______________________________<br><b>Servicio:</b> ______________________________</div></div>
+   <h1>Prueba breve de evaluación del funcionamiento (FAST)</h1>
+   <div class="sub">Hoja de registro · ${esc(m.tipo)}</div>
+   <table class="meta"><tr><td><b>ID:</b> ${esc(m.id)}</td><td><b>HC:</b> ${esc(m.hc)}</td><td><b>Edad:</b> ${esc(m.edad)}</td><td><b>Sexo:</b> ${esc(m.sexo)}</td></tr>
+   <tr><td><b>Dx:</b> ${esc(m.dx)}</td><td><b>Servicio:</b> ${esc(m.servicio)}</td><td><b>Contexto:</b> ${esc(m.contexto)}</td><td><b>Fecha:</b> ${esc(m.fecha)}</td></tr>
+   <tr><td colspan="4"><b>Fuentes:</b> ${esc(fu)}${m.noTrabaja?` · <b>Situación laboral:</b> ${esc(m.noTrabaja)}`:""}</td></tr></table>
+   <p style="font-size:8.5pt;margin:6px 0">0 = ninguna dificultad · 1 = poca · 2 = bastante · 3 = mucha · NE = no evaluable</p>
+   <table><tr><th>N.º</th><th>Ítem</th><th style="text-align:center">Puntaje</th></tr>${rows}
+   <tr class="dh"><td colspan="2">TOTAL (0–72)${c.ne?` · ${c.ne} NE`:""}</td><td style="text-align:center">${c.tot}</td></tr></table>
+   <p style="margin:8px 0 0"><b>Interpretación referencial:</b> ${b}.</p>
+   ${al.length?`<p style="margin:6px 0 0"><b>Observaciones:</b><br>${al.map(([,x])=>"• "+esc(x)).join("<br>")}</p>`:""}
+   ${m.discrepancia&&m.discrepancia.trim()?`<p style="margin:6px 0 0"><b>Discrepancias entre fuentes:</b> ${esc(m.discrepancia)}</p>`:""}
+   <div class="sig"><div>Firma y sello del evaluador<br>${esc(m.evaluador)}</div><div>Fecha</div></div>
+   <p class="note">Herramienta de apoyo clínico de acceso abierto. No reemplaza la versión autorizada de la FAST (Rosa et al., 2007). Bandas referenciales: Bonnín et al., 2018.</p>`;
+}
+
+/* ---------- render ---------- */
+function render(){
+  if(S.view==="item"&&S.mode==="rapido")S.view="quick";
+  if(S.view==="quick"&&S.mode==="entrevista")S.view="item";
+  renderStatus();side();sheet();
+  const M=document.getElementById("main");
+  M.innerHTML=S.view==="datos"?viewDatos():S.view==="res"?viewRes():S.view==="quick"?viewQuick():viewItem();
+}
+document.addEventListener("keydown",e=>{
+  if(S.view!=="item"||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)||e.metaKey||e.ctrlKey||e.altKey)return;
+  if(/^[0-3]$/.test(e.key))setR(S.cur,+e.key);
+  else if((e.key==="n"||e.key==="N")&&ITEMS[S.cur].ne)setR(S.cur,"NE");
+  else if(e.key==="ArrowRight")S.cur<24?goItem(S.cur+1):go("res");
+  else if(e.key==="ArrowLeft")S.cur>1?goItem(S.cur-1):go("datos");
+});
+render();
+</script>
+</body>
+</html>
